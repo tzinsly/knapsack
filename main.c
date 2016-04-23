@@ -10,7 +10,7 @@
 
 int main(void){
 
-	printf("Test");
+	int x = knapsack();
 	return 0;
 }
 
