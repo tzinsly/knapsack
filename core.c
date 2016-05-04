@@ -9,13 +9,35 @@
 #include <stdlib.h>
 
 #define NUMITEMS 4;
-#define KP_VOL 26;
+#define NUMCHR 5;
+#define KP_VOL 40;
 
 struct cell {
 	int ben;
 	int vol;
 
 } typedef cell;
+
+struct cell items[4];
+int chromossome[5][4][2];
+
+int calcVol(int chrom_num){
+	int vol = 0;
+	int i;
+	for (i = 0; i < 4; i++){
+		vol = vol + chromossome[chrom_num][i][0] * items[i].vol;
+	}
+	return (vol);
+}
+
+int calcFit(int chrom_num){
+	int fit = 0;
+		int i;
+		for (i = 0; i < 4; i++){
+			fit = fit + chromossome[chrom_num][i][0] * items[i].ben;
+		}
+		return (fit);
+}
 
 int knapsack(){
 
@@ -24,10 +46,10 @@ int knapsack(){
 	*  The third dimension (2) is used to former the new generation
 	**/
 
-	int chromossome[5][4][2];
-	struct cell items[4];
 
-	//Initialize item:
+	struct cell chroms[5];
+
+	//Initialize item (could be from file):
 	items[0].ben = 1;
 	items[0].vol = 6;
 
@@ -43,18 +65,23 @@ int knapsack(){
 	//Generate random numbers from 0 to 3
 
 	int i;
-	for (i = 0; i < 40; i++)
-	{
-		/* generating random values between 0 and 3 */
-		printf("%d ", rand() % 4);
-	}
+	int j;
+	//int u;
 
-	chromossome[0][0][0] = 2;
-	chromossome[0][1][0] = 1;
-	chromossome[0][2][0] = 0;
-	chromossome[0][3][0] = 5;
-
-
+	//for (u=0; u<2; u++){
+		for (j=0; j<5; j++)
+		{
+			for (i = 0; i < 4; i++)
+			{
+				chromossome[j][i][0] = (rand() % 4);
+				printf(">> Chromossome %d %d %d = %d\n", j, i, 0, chromossome[j][i][0]);
+			}
+			chroms[j].vol = calcVol(j);
+			chroms[j].ben = calcFit(j);
+			printf("Vol chromossome %d = %d\n", j, chroms[j].vol);
+			printf("Fit chromossome %d = %d\n", j, chroms[j].ben);
+		}
+	//}
 
 	return 0;
 }
