@@ -39,6 +39,13 @@ int calcFit(int chrom_num){
 		return (fit);
 }
 
+//1 point for Crossover
+int crossOver(int chrom1, int chrom2){
+	//chromossome[0][0][1]
+	//chromossome[0][1][1]
+
+}
+
 int knapsack(){
 
 	/**The first dimension (5) represents the number of chromosomes in a population
