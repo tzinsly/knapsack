@@ -25,21 +25,6 @@ int chromosome[5][4][2]; /*Chromosome of two populations*/
 struct cell chroms[5][2]; /*Volume and benefit of each chromosome from current population*/
 int reprod[5];
 
-void eval(int p) {
-	int i; /*Item number*/
-	int c; /*Chromosome number*/
-
-	for (c = 0; c < 5; c++) {
-		for (i = 0; i < 4; i++) {
-			chroms[c][p].vol = calcVol(c, p);
-			chroms[c][p].ben = calcFit(c, p);
-
-			printf("Vol chromosome %d = %d\n", c, chroms[c][p].vol);
-			printf("Fit chromosome %d = %d\n", c, chroms[c][p].ben);
-		}
-	}
-}
-
 int calcVol(int chrom_num, int pop) {
 	int vol = 0;
 	int i;
@@ -63,6 +48,22 @@ int calcFit(int chrom_num, int pop) {
 
 }
 
+void eval(int p) {
+	int i; /*Item number*/
+	int c; /*Chromosome number*/
+
+	for (c = 0; c < 5; c++) {
+		for (i = 0; i < 4; i++) {
+			chroms[c][p].vol = calcVol(c, p);
+			chroms[c][p].ben = calcFit(c, p);
+		}
+		printf("Vol chromosome %d = %d\n", c, chroms[c][p].vol);
+		printf("Fit chromosome %d = %d\n", c, chroms[c][p].ben);
+	}
+}
+
+
+
 void select_parents(int p) {
 	/*
 	 * Reproduction Rate of 80%
@@ -71,13 +72,14 @@ void select_parents(int p) {
 	int count;
 	int cand1, cand2;
 	for (count = 0; count < (5 * 0.8); count++) {
-		cand1 = (rand() % 6);
-		cand2 = (rand() % 6);
+		cand1 = (rand() % 5);
+		cand2 = (rand() % 5);
 		if (chroms[cand1][p].ben > chroms[cand2][p].ben) {
 			reprod[count] = cand1;
 		} else {
 			reprod[count] = cand2;
 		}
+		printf("Reprod %d = %d\n", count, reprod[count]);
 	}
 }
 //1 point for Crossover
@@ -86,24 +88,37 @@ void crossOver(int limit) {
 	int cross_point;
 	int pop1 = 0;
 	int pop2 = 0;
-	int c, i;
+	int i;
 
-	for (count = 0; count < (5 * 0.8) / 2; count + 2) {
+	for (count=0; count <= (limit / 2); count=count+2) {
 
-		cross_point = (rand() % 4);
+		cross_point = (rand() % 3);
 		for (i = 0; i <= cross_point; i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
-			chromosome[count+1][i][pop2] = chromosome[reprod[count+1]][i][pop1];
+			chromosome[count + 1][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
+			printf(">> Chromosome %d %d 1 = %d\n", count, i,
+					chromosome[count][i][pop2]);
+			printf(">> Chromosome %d %d 1 = %d\n", count+1, i,
+					chromosome[count + 1][i][pop2]);
 		}
 
-		for (i = cross_point+1; i <= cross_point; i++) {
-			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
-			chromosome[count+1][i][pop2] = chromosome[reprod[count+1]][i][pop1];
+		for (i = cross_point + 1; i <= (4-1); i++) {
+			chromosome[count][i][pop2] = chromosome[reprod[count +1]][i][pop1];
+			chromosome[count + 1][i][pop2] =
+					chromosome[reprod[count]][i][pop1];
+
+			printf(">> Chromosome %d %d 1 = %d\n", count, i,
+					chromosome[count][i][pop2]);
+			printf(">> Chromosome %d %d 1 = %d\n", count+1, i,
+					chromosome[count + 1][i][pop2]);
 		}
+
+		printf("Cross_point = %d \n", cross_point);
+
 	}
 }
 
-void next_gen(){
+void next_gen() {
 
 	/*
 	 * Selecting next item by Elitism
@@ -114,8 +129,8 @@ void next_gen(){
 	/*
 	 * Verifying what is the best chromosome
 	 */
-	for (c=0; c<5; c++){
-		if (chroms[c][0].ben > chroms[4][1].ben){
+	for (c = 0; c < 5; c++) {
+		if (chroms[c][0].ben > chroms[4][1].ben) {
 			chroms[4][1].ben = chroms[c][0].ben;
 			chroms[4][1].vol = chroms[c][0].vol;
 			crm = i;
@@ -123,14 +138,14 @@ void next_gen(){
 	}
 
 	/*Replicating the best one for the next generation*/
-	for (i=0; i<4; i++){
+	for (i = 0; i < 4; i++) {
 		chromosome[4][i][1] = chromosome[crm][i][0];
 	}
 
 	/*Bringing pop 2 to pop 1*/
 	for (c = 0; c < 5; c++) {
-			for (i = 0; i < 4; i++) {
-				chromosome[c][i][0] = chromosome[c][i][1];
+		for (i = 0; i < 4; i++) {
+			chromosome[c][i][0] = chromosome[c][i][1];
 		}
 	}
 }
@@ -164,21 +179,23 @@ int knapsack() {
 	/*
 	 * Generating first Population
 	 */
+	printf("First pop\n");
 	for (c = 0; c < 5; c++) {
 		for (i = 0; i < 4; i++) {
 			chromosome[c][i][p] = (rand() % 4);
-			printf(">> Chromosome %d %d %d = %d\n", c, i, p,
-					chromosome[c][i][p]);
+			printf("%d  ", chromosome[c][i][p]);
 		}
+		printf("\n");
 	}
 
 	/*
 	 * Repeat while less than 80% of population has the same fitnessa value && count less than 500x
 	 */
 	int iteration;
-	for (iteration = 0; iteration < 500; iteration++) {
+	for (iteration = 0; iteration <= 0; iteration++) {
 		eval(p);
 		select_parents(p);
+		crossOver(5 * 0.8);
 
 	}
 
