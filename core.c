@@ -8,11 +8,12 @@
 #include <conio.h>
 #include <stdlib.h>
 
-#define NUMITEMS 4;
-#define NUMCRH 5;
-#define KP_VOL 40;
-#define REP_RATE 0,8;
-#define STOP_LIMIT 500;
+#define NUMCRH 5
+#define NUMITENS 4
+#define KP_VOL 40
+#define REP_RATE 0.8
+#define STOP_LIMIT 100
+#define POP 2
 
 struct cell {
 	int ben;
@@ -20,27 +21,31 @@ struct cell {
 
 }typedef cell;
 
-struct cell items[4]; /*Possible itens to be placed into the knapsack and its volume and benefit*/
-int chromosome[5][4][2]; /*Chromosome of two populations*/
-struct cell chroms[5][2]; /*Volume and benefit of each chromosome from current population*/
-int reprod[5];
+struct cell items[NUMITENS]; /*Possible itens to be placed into the knapsack and its volume and benefit*/
+int chromosome[NUMCRH][NUMITENS][POP]; /*Chromosome of two populations*/
+struct cell chroms[NUMCRH];
+int reprod[NUMCRH];
 
-int calcVol(int chrom_num, int pop) {
+void BubbleSort(int vetor[], int tamanho);
+
+int calcVol(int chrom_num) {
 	int vol = 0;
 	int i;
-	for (i = 0; i < 4; i++) {
+	int pop = 0;
+	for (i = 0; i < NUMITENS; i++) {
 		vol = vol + chromosome[chrom_num][i][pop] * items[i].vol;
 	}
 	return (vol);
 }
 
-int calcFit(int chrom_num, int pop) {
+int calcFit(int chrom_num) {
 	int fit = 0;
 	int i;
-	for (i = 0; i < 4; i++) {
+	int pop = 0;
+	for (i = 0; i < NUMITENS; i++) {
 		fit = fit + chromosome[chrom_num][i][pop] * items[i].ben;
 	}
-	if (chroms[chrom_num][pop].vol > 40) {
+	if (chroms[chrom_num].vol > KP_VOL) {
 		return 0;
 	} else {
 		return (fit);
@@ -48,33 +53,31 @@ int calcFit(int chrom_num, int pop) {
 
 }
 
-void eval(int p) {
+void eval() {
 	int i; /*Item number*/
 	int c; /*Chromosome number*/
 
-	for (c = 0; c < 5; c++) {
-		for (i = 0; i < 4; i++) {
-			chroms[c][p].vol = calcVol(c, p);
-			chroms[c][p].ben = calcFit(c, p);
+	for (c = 0; c < NUMCRH; c++) {
+		for (i = 0; i < NUMITENS; i++) {
+			chroms[c].vol = calcVol(c);
+			chroms[c].ben = calcFit(c);
 		}
-		printf("Vol chromosome %d = %d\n", c, chroms[c][p].vol);
-		printf("Fit chromosome %d = %d\n", c, chroms[c][p].ben);
+		printf("Vol chromosome %d = %d\n", c, chroms[c].vol);
+		printf("Fit chromosome %d = %d\n", c, chroms[c].ben);
 	}
 }
 
-
-
-void select_parents(int p) {
+void select_parents() {
 	/*
 	 * Reproduction Rate of 80%
 	 * Selection by Tournament
 	 */
 	int count;
 	int cand1, cand2;
-	for (count = 0; count < (5 * 0.8); count++) {
-		cand1 = (rand() % 5);
-		cand2 = (rand() % 5);
-		if (chroms[cand1][p].ben > chroms[cand2][p].ben) {
+	for (count = 0; count < (NUMCRH * REP_RATE); count++) {
+		cand1 = (rand() % NUMCRH);
+		cand2 = (rand() % NUMCRH);
+		if (chroms[cand1].ben > chroms[cand2].ben) {
 			reprod[count] = cand1;
 		} else {
 			reprod[count] = cand2;
@@ -87,29 +90,29 @@ void crossOver(int limit) {
 	int count;
 	int cross_point;
 	int pop1 = 0;
-	int pop2 = 0;
+	int pop2 = 1;
 	int i;
 
-	for (count=0; count <= (limit / 2); count=count+2) {
+	for (count = 0; count <= (limit / 2); count = count + 2) {
 
 		cross_point = (rand() % 3);
 		for (i = 0; i <= cross_point; i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
-			chromosome[count + 1][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
+			chromosome[count + 1][i][pop2] =
+					chromosome[reprod[count + 1]][i][pop1];
 			printf(">> Chromosome %d %d 1 = %d\n", count, i,
 					chromosome[count][i][pop2]);
-			printf(">> Chromosome %d %d 1 = %d\n", count+1, i,
+			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
 					chromosome[count + 1][i][pop2]);
 		}
 
-		for (i = cross_point + 1; i <= (4-1); i++) {
-			chromosome[count][i][pop2] = chromosome[reprod[count +1]][i][pop1];
-			chromosome[count + 1][i][pop2] =
-					chromosome[reprod[count]][i][pop1];
+		for (i = cross_point + 1; i <= (NUMITENS - 1); i++) {
+			chromosome[count][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
+			chromosome[count + 1][i][pop2] = chromosome[reprod[count]][i][pop1];
 
 			printf(">> Chromosome %d %d 1 = %d\n", count, i,
 					chromosome[count][i][pop2]);
-			printf(">> Chromosome %d %d 1 = %d\n", count+1, i,
+			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
 					chromosome[count + 1][i][pop2]);
 		}
 
@@ -124,36 +127,62 @@ void next_gen() {
 	 * Selecting next item by Elitism
 	 */
 	int i, c;
-	int crm;
+	int crm = 0;
 
 	/*
 	 * Verifying what is the best chromosome
 	 */
-	for (c = 0; c < 5; c++) {
-		if (chroms[c][0].ben > chroms[4][1].ben) {
-			chroms[4][1].ben = chroms[c][0].ben;
-			chroms[4][1].vol = chroms[c][0].vol;
-			crm = i;
+	for (c = 0; c < NUMCRH; c++) {
+		if (chroms[c].ben > chroms[crm].ben) {
+			crm = c;
 		}
 	}
 
 	/*Replicating the best one for the next generation*/
-	for (i = 0; i < 4; i++) {
-		chromosome[4][i][1] = chromosome[crm][i][0];
+	for (i = 0; i < NUMITENS; i++) {
+		chromosome[NUMITENS][i][1] = chromosome[crm][i][0];
 	}
 
 	/*Bringing pop 2 to pop 1*/
-	for (c = 0; c < 5; c++) {
-		for (i = 0; i < 4; i++) {
+	printf("Next Generation\n");
+	for (c = 0; c < NUMCRH; c++) {
+		for (i = 0; i < NUMITENS; i++) {
 			chromosome[c][i][0] = chromosome[c][i][1];
+			printf("%d  ", chromosome[c][i][0]);
 		}
+		printf("\n");
 	}
 }
 
-int knapsack() {
+/*
+ * This function analyzes if more than 80% of the population has the
+ */
+int converg() {
+	int c;
+	int conv = 1;
+	int conv_aux = 0;
+	int temp_array[NUMCRH];
 
-	/**The first dimension (5) represents the number of chromosome in a population
-	 *  The second dimension (4) represents the number of items to be placed into the knapsack
+	for (c = 0; c < NUMCRH; c++){
+		temp_array[c] = chroms[c].ben;
+	}
+
+	BubbleSort(temp_array, NUMCRH);
+
+	for (c = 0; c < NUMCRH; c++) {
+		if (temp_array[c] == temp_array[c + 1]) {
+			conv++;
+		} else if (conv > conv_aux) {
+			conv_aux = conv;
+			conv = 1;
+		}
+	}
+	return conv_aux;
+}
+void knapsack() {
+
+	/**The first dimension (NUMCRH) represents the number of chromosome in a population
+	 *  The second dimension (NUMITENS) represents the number of items to be placed into the knapsack
 	 *  The third dimension (2) is used to former the new generation
 	 **/
 
@@ -180,25 +209,28 @@ int knapsack() {
 	 * Generating first Population
 	 */
 	printf("First pop\n");
-	for (c = 0; c < 5; c++) {
-		for (i = 0; i < 4; i++) {
-			chromosome[c][i][p] = (rand() % 4);
+	for (c = 0; c < NUMCRH; c++) {
+		for (i = 0; i < NUMITENS; i++) {
+			chromosome[c][i][p] = (rand() % NUMITENS);
 			printf("%d  ", chromosome[c][i][p]);
 		}
 		printf("\n");
 	}
 
 	/*
-	 * Repeat while less than 80% of population has the same fitnessa value && count less than 500x
+	 * Repeat while less than 80% of population has the same fitness value && count less than 500x
 	 */
 	int iteration;
-	for (iteration = 0; iteration <= 0; iteration++) {
-		eval(p);
-		select_parents(p);
-		crossOver(5 * 0.8);
+	for (iteration = 0; iteration <= STOP_LIMIT; iteration++) {
+		eval();
+		if (converg() >= (NUMCRH * REP_RATE)) {
+				iteration = STOP_LIMIT;
+		} else {
+			select_parents();
+			crossOver(NUMCRH * REP_RATE);
+			next_gen();
+		}
 
 	}
-
-	return 0;
 }
 

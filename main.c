@@ -8,10 +8,11 @@
 
 #include <stdio.h>
 
-int main(void){
+int knapsack();
 
-	int x = knapsack();
+int main(void) {
+
+	knapsack();
 	return 0;
 }
-
 
