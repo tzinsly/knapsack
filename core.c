@@ -8,7 +8,7 @@
 #include <conio.h>
 #include <stdlib.h>
 
-#define NUMCRH 5
+#define NUMCRH 10
 #define NUMITENS 4
 #define KP_VOL 40
 #define REP_RATE 0.8
@@ -93,7 +93,7 @@ void crossOver(int limit) {
 	int pop2 = 1;
 	int i;
 
-	for (count = 0; count <= (limit / 2); count = count + 2) {
+	for (count = 0; count <= (limit - 2); count = count + 2) {
 
 		cross_point = (rand() % 3);
 		for (i = 0; i <= cross_point; i++) {
@@ -127,20 +127,37 @@ void next_gen() {
 	 * Selecting next item by Elitism
 	 */
 	int i, c;
-	int crm = 0;
+	int replic = NUMCRH - (NUMCRH * REP_RATE);
+	int crm[replic];
+
+	int temp_array[NUMCRH];
+
+	for (c = 0; c < NUMCRH; c++){
+		temp_array[c] = chroms[c].ben;
+	}
+	BubbleSort(temp_array, NUMCRH);
 
 	/*
-	 * Verifying what is the best chromosome
+	 * Verifying what are the bests chromosomes
 	 */
-	for (c = 0; c < NUMCRH; c++) {
-		if (chroms[c].ben > chroms[crm].ben) {
-			crm = c;
+	int j = 0;
+	for (i=NUMCRH-1; i>=(NUMCRH-replic); i--,j++){
+		for (c = 0; c < NUMCRH; c++) {
+			if ( (chroms[c].ben == temp_array[i])) {
+				if( (j == 0) || (j != 0 && crm[j-1] != c) ){
+					crm[j] = c;
+					c = NUMCRH;
+				}
+			}
 		}
 	}
 
-	/*Replicating the best one for the next generation*/
-	for (i = 0; i < NUMITENS; i++) {
-		chromosome[NUMITENS][i][1] = chromosome[crm][i][0];
+	/*Replicating the bests for the next generation*/
+	int pos = 0;
+	for (c = (NUMCRH * REP_RATE); c<NUMCRH; c++,pos++){
+		for (i = 0; i < NUMITENS; i++) {
+			chromosome[c][i][1] = chromosome[crm[pos]][i][0];
+		}
 	}
 
 	/*Bringing pop 2 to pop 1*/
@@ -220,17 +237,20 @@ void knapsack() {
 	/*
 	 * Repeat while less than 80% of population has the same fitness value && count less than 500x
 	 */
-	int iteration;
+	int iteration, it;
 	for (iteration = 0; iteration <= STOP_LIMIT; iteration++) {
 		eval();
 		if (converg() >= (NUMCRH * REP_RATE)) {
-				iteration = STOP_LIMIT;
+			it = iteration+1;
+			iteration = STOP_LIMIT;
 		} else {
+			it = iteration+1;
 			select_parents();
 			crossOver(NUMCRH * REP_RATE);
 			next_gen();
 		}
-
 	}
+	printf(">> Num Iterations: %d\n", it);
+
 }
 
