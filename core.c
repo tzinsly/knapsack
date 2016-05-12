@@ -8,11 +8,12 @@
 #include <conio.h>
 #include <stdlib.h>
 
-#define NUMCRH 10
-#define NUMITENS 4
-#define KP_VOL 40
+#define NUMCRH 300
+#define NUMITENS 8
+#define EACHITEM 3
+#define KP_VOL 80
 #define REP_RATE 0.8
-#define STOP_LIMIT 100
+#define STOP_LIMIT 200
 #define POP 2
 
 struct cell {
@@ -25,6 +26,7 @@ struct cell items[NUMITENS]; /*Possible itens to be placed into the knapsack and
 int chromosome[NUMCRH][NUMITENS][POP]; /*Chromosome of two populations*/
 struct cell chroms[NUMCRH];
 int reprod[NUMCRH];
+int best_fit;
 
 void BubbleSort(int vetor[], int tamanho);
 
@@ -190,6 +192,7 @@ int converg() {
 		if (temp_array[c] == temp_array[c + 1]) {
 			conv++;
 		} else if (conv > conv_aux) {
+			best_fit = temp_array[c];
 			conv_aux = conv;
 			conv = 1;
 		}
@@ -218,6 +221,18 @@ void knapsack() {
 	items[3].ben = 9;
 	items[3].vol = 5;
 
+	items[4].ben = 9;
+	items[4].vol = 6;
+
+	items[5].ben = 9;
+	items[5].vol = 8;
+
+	items[6].ben = 2;
+	items[6].vol = 4;
+
+	items[7].ben = 3;
+	items[7].vol = 1;
+
 	int i; /*Item number*/
 	int c; /*Chromosome number*/
 	int p = 0; /*Pop 1*/
@@ -228,7 +243,7 @@ void knapsack() {
 	printf("First pop\n");
 	for (c = 0; c < NUMCRH; c++) {
 		for (i = 0; i < NUMITENS; i++) {
-			chromosome[c][i][p] = (rand() % NUMITENS);
+			chromosome[c][i][p] = (rand() % EACHITEM);
 			printf("%d  ", chromosome[c][i][p]);
 		}
 		printf("\n");
@@ -251,6 +266,7 @@ void knapsack() {
 		}
 	}
 	printf(">> Num Iterations: %d\n", it);
+	printf(">> Best fitness: %d\n", best_fit);
 
 }
 
