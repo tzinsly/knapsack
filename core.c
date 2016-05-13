@@ -8,11 +8,11 @@
 #include <conio.h>
 #include <stdlib.h>
 
-#define NUMCRH 300
+#define NUMCRH 200
 #define NUMITENS 8
 #define EACHITEM 3
 #define KP_VOL 80
-#define REP_RATE 0.8
+#define REP_RATE 0.95
 #define STOP_LIMIT 200
 #define POP 2
 
@@ -69,7 +69,7 @@ void eval() {
 	}
 }
 
-void select_parents() {
+void tournement() {
 	/*
 	 * Reproduction Rate of 80%
 	 * Selection by Tournament
@@ -87,8 +87,33 @@ void select_parents() {
 		printf("Reprod %d = %d\n", count, reprod[count]);
 	}
 }
+
+void roulette_wheel(){
+
+	int a, i, r, item;
+	int amount;
+	int rep;
+
+	for (rep=0; rep < (NUMCRH * REP_RATE); rep++){
+		for (i=0; i<NUMCRH; i++){
+			amount = amount + chroms[i].ben;
+		}
+		r = (rand() % amount+1);
+
+		a = 0;
+		for(i=0; i<NUMCRH; i++){
+			a = a + chroms[i].ben;
+			if (a >= r){
+				rep[rep] = i;
+				i = NUMCRH;
+			}
+		}
+	}
+
+}
+
 //1 point for Crossover
-void crossOver(int limit) {
+void crossOver_1(int limit) {
 	int count;
 	int cross_point;
 	int pop1 = 0;
@@ -123,10 +148,62 @@ void crossOver(int limit) {
 	}
 }
 
+void crossOver_2(int limit) {
+	int count;
+	int cross_point_1;
+	int cross_point_2;
+	int pop1 = 0;
+	int pop2 = 1;
+	int i;
+
+	for (count = 0; count <= (limit - 2); count = count + 2) {
+
+		cross_point_1 = (rand() % NUMITENS-1);
+		cross_point_2 = (rand() % NUMITENS-1);
+		while (cross_point_2 == cross_point_1){
+			cross_point_2 = (rand() % NUMITENS-1);
+		}
+
+		for (i = 0; i <= cross_point_1; i++) {
+			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
+			chromosome[count + 1][i][pop2] =
+					chromosome[reprod[count + 1]][i][pop1];
+			printf(">> Chromosome %d %d 1 = %d\n", count, i,
+					chromosome[count][i][pop2]);
+			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+					chromosome[count + 1][i][pop2]);
+		}
+
+		for (i = cross_point_1 + 1; i <= cross_point_2; i++) {
+			chromosome[count][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
+			chromosome[count + 1][i][pop2] = chromosome[reprod[count]][i][pop1];
+
+			printf(">> Chromosome %d %d 1 = %d\n", count, i,
+					chromosome[count][i][pop2]);
+			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+					chromosome[count + 1][i][pop2]);
+		}
+
+		for (i = cross_point_2 + 1; i <= (NUMITENS - 1); i++) {
+					chromosome[count][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
+					chromosome[count + 1][i][pop2] = chromosome[reprod[count]][i][pop1];
+
+					printf(">> Chromosome %d %d 1 = %d\n", count, i,
+							chromosome[count][i][pop2]);
+					printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+							chromosome[count + 1][i][pop2]);
+				}
+
+		printf("Cross_point1 = %d \n", cross_point_1);
+		printf("Cross_point1 = %d \n", cross_point_2);
+
+	}
+}
+
 void next_gen() {
 
 	/*
-	 * Selecting next item by Elitism
+	 * Selecting next item by Steady State
 	 */
 	int i, c;
 	int replic = NUMCRH - (NUMCRH * REP_RATE);
@@ -171,6 +248,10 @@ void next_gen() {
 		}
 		printf("\n");
 	}
+}
+
+void swap(){
+
 }
 
 /*
@@ -260,8 +341,9 @@ void knapsack() {
 			iteration = STOP_LIMIT;
 		} else {
 			it = iteration+1;
-			select_parents();
-			crossOver(NUMCRH * REP_RATE);
+			//tournement();
+			roulette_wheel();
+			crossOver_2(NUMCRH * REP_RATE);
 			next_gen();
 		}
 	}
