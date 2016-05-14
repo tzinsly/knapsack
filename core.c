@@ -8,13 +8,14 @@
 #include <conio.h>
 #include <stdlib.h>
 
-#define NUMCRH 200
+#define NUMCRH 20
 #define NUMITENS 8
 #define EACHITEM 3
-#define KP_VOL 80
+#define KP_VOL 100
 #define REP_RATE 0.95
 #define STOP_LIMIT 200
 #define POP 2
+#define SWAP_RATE 0.10
 
 struct cell {
 	int ben;
@@ -104,7 +105,7 @@ void roulette_wheel(){
 		for(i=0; i<NUMCRH; i++){
 			a = a + chroms[i].ben;
 			if (a >= r){
-				rep[rep] = i;
+				reprod[rep] = i;
 				i = NUMCRH;
 			}
 		}
@@ -122,7 +123,7 @@ void crossOver_1(int limit) {
 
 	for (count = 0; count <= (limit - 2); count = count + 2) {
 
-		cross_point = (rand() % 3);
+		cross_point = (rand() % NUMITENS-1);
 		for (i = 0; i <= cross_point; i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
 			chromosome[count + 1][i][pop2] =
@@ -164,6 +165,12 @@ void crossOver_2(int limit) {
 			cross_point_2 = (rand() % NUMITENS-1);
 		}
 
+		if (cross_point_1 > cross_point_2){
+			int aux = cross_point_1;
+			cross_point_1 = cross_point_2;
+			cross_point_2 = aux;
+		}
+
 		for (i = 0; i <= cross_point_1; i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
 			chromosome[count + 1][i][pop2] =
@@ -185,8 +192,9 @@ void crossOver_2(int limit) {
 		}
 
 		for (i = cross_point_2 + 1; i <= (NUMITENS - 1); i++) {
-					chromosome[count][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
-					chromosome[count + 1][i][pop2] = chromosome[reprod[count]][i][pop1];
+
+					chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
+					chromosome[count + 1][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
 
 					printf(">> Chromosome %d %d 1 = %d\n", count, i,
 							chromosome[count][i][pop2]);
@@ -195,9 +203,34 @@ void crossOver_2(int limit) {
 				}
 
 		printf("Cross_point1 = %d \n", cross_point_1);
-		printf("Cross_point1 = %d \n", cross_point_2);
+		printf("Cross_point2 = %d \n", cross_point_2);
+		printf("Reprod 1 = %d\n", reprod[count]);
+		printf("Reprod 2 = %d\n", reprod[count+1]);
 
 	}
+}
+
+void swap(){
+	/*Aleatory choice*/
+	int mut, item;
+	int s1, s2;
+	int aux;
+	int pop2 = 1;
+
+	for (mut=0; mut < (NUMCRH * SWAP_RATE); mut++){
+		item = rand() % NUMCRH;
+
+		s1 = rand() % NUMITENS;
+		s2 = rand() % NUMITENS;
+		while (s1 == s2){
+			s2 = rand() % NUMITENS;
+		}
+
+		aux = chromosome[item][s1][pop2];
+		chromosome[item][s1][pop2] = chromosome[item][s2][pop2];
+		chromosome[item][s2][pop2] = aux;
+	}
+
 }
 
 void next_gen() {
@@ -248,10 +281,6 @@ void next_gen() {
 		}
 		printf("\n");
 	}
-}
-
-void swap(){
-
 }
 
 /*
@@ -324,11 +353,12 @@ void knapsack() {
 	printf("First pop\n");
 	for (c = 0; c < NUMCRH; c++) {
 		for (i = 0; i < NUMITENS; i++) {
-			chromosome[c][i][p] = (rand() % EACHITEM);
+			chromosome[c][i][p] = (rand() % EACHITEM+1);
 			printf("%d  ", chromosome[c][i][p]);
 		}
 		printf("\n");
 	}
+	//return;
 
 	/*
 	 * Repeat while less than 80% of population has the same fitness value && count less than 500x
@@ -343,7 +373,9 @@ void knapsack() {
 			it = iteration+1;
 			//tournement();
 			roulette_wheel();
+			//crossOver_1(NUMCRH * REP_RATE);
 			crossOver_2(NUMCRH * REP_RATE);
+			swap();
 			next_gen();
 		}
 	}
