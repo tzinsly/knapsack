@@ -8,14 +8,14 @@
 #include <conio.h>
 #include <stdlib.h>
 
-#define NUMCRH 20
+#define NUMCRH 200
 #define NUMITENS 8
 #define EACHITEM 3
 #define KP_VOL 100
 #define REP_RATE 0.95
 #define STOP_LIMIT 200
 #define POP 2
-#define SWAP_RATE 0.10
+#define MUT_RATE 0.1
 
 struct cell {
 	int ben;
@@ -25,8 +25,8 @@ struct cell {
 
 struct cell items[NUMITENS]; /*Possible itens to be placed into the knapsack and its volume and benefit*/
 int chromosome[NUMCRH][NUMITENS][POP]; /*Chromosome of two populations*/
-struct cell chroms[NUMCRH];
-int reprod[NUMCRH];
+struct cell chroms[NUMCRH]; /*Chromosomes already evaluated. Here you can see the volume and the benefit of each chromosome*/
+int reprod[NUMCRH]; /*List of parents*/
 int best_fit;
 
 void BubbleSort(int vetor[], int tamanho);
@@ -59,20 +59,24 @@ int calcFit(int chrom_num) {
 void eval() {
 	int i; /*Item number*/
 	int c; /*Chromosome number*/
+	int best_fit_local = 0;
 
 	for (c = 0; c < NUMCRH; c++) {
 		for (i = 0; i < NUMITENS; i++) {
 			chroms[c].vol = calcVol(c);
 			chroms[c].ben = calcFit(c);
+			if (chroms[c].ben > best_fit_local) {
+				best_fit_local = chroms[c].ben;
+			}
 		}
-		printf("Vol chromosome %d = %d\n", c, chroms[c].vol);
-		printf("Fit chromosome %d = %d\n", c, chroms[c].ben);
+		//printf("Vol chromosome %d = %d\n", c, chroms[c].vol);
+		//printf("Fit chromosome %d = %d\n", c, chroms[c].ben);
 	}
+	printf("****** Best_fit_local: %d\n", best_fit_local);
 }
 
 void tournement() {
 	/*
-	 * Reproduction Rate of 80%
 	 * Selection by Tournament
 	 */
 	int count;
@@ -85,26 +89,26 @@ void tournement() {
 		} else {
 			reprod[count] = cand2;
 		}
-		printf("Reprod %d = %d\n", count, reprod[count]);
+		//printf("Reprod %d = %d\n", count, reprod[count]);
 	}
 }
 
-void roulette_wheel(){
+void roulette_wheel() {
 
-	int a, i, r, item;
+	int a, i, r;
 	int amount;
 	int rep;
 
-	for (rep=0; rep < (NUMCRH * REP_RATE); rep++){
-		for (i=0; i<NUMCRH; i++){
+	for (rep = 0; rep < (NUMCRH * REP_RATE); rep++) {
+		for (i = 0; i < NUMCRH; i++) {
 			amount = amount + chroms[i].ben;
 		}
-		r = (rand() % amount+1);
+		r = (rand() % amount + 1);
 
 		a = 0;
-		for(i=0; i<NUMCRH; i++){
+		for (i = 0; i < NUMCRH; i++) {
 			a = a + chroms[i].ben;
-			if (a >= r){
+			if (a >= r) {
 				reprod[rep] = i;
 				i = NUMCRH;
 			}
@@ -113,7 +117,6 @@ void roulette_wheel(){
 
 }
 
-//1 point for Crossover
 void crossOver_1(int limit) {
 	int count;
 	int cross_point;
@@ -123,28 +126,28 @@ void crossOver_1(int limit) {
 
 	for (count = 0; count <= (limit - 2); count = count + 2) {
 
-		cross_point = (rand() % NUMITENS-1);
+		cross_point = (rand() % NUMITENS - 1);
 		for (i = 0; i <= cross_point; i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
 			chromosome[count + 1][i][pop2] =
 					chromosome[reprod[count + 1]][i][pop1];
-			printf(">> Chromosome %d %d 1 = %d\n", count, i,
-					chromosome[count][i][pop2]);
-			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
-					chromosome[count + 1][i][pop2]);
+			/*printf(">> Chromosome %d %d 1 = %d\n", count, i,
+			 chromosome[count][i][pop2]);
+			 printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+			 chromosome[count + 1][i][pop2]);*/
 		}
 
 		for (i = cross_point + 1; i <= (NUMITENS - 1); i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
 			chromosome[count + 1][i][pop2] = chromosome[reprod[count]][i][pop1];
 
-			printf(">> Chromosome %d %d 1 = %d\n", count, i,
-					chromosome[count][i][pop2]);
-			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
-					chromosome[count + 1][i][pop2]);
+			/*printf(">> Chromosome %d %d 1 = %d\n", count, i,
+			 chromosome[count][i][pop2]);
+			 printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+			 chromosome[count + 1][i][pop2]);*/
 		}
 
-		printf("Cross_point = %d \n", cross_point);
+		//printf("Cross_point = %d \n", cross_point);
 
 	}
 }
@@ -159,13 +162,13 @@ void crossOver_2(int limit) {
 
 	for (count = 0; count <= (limit - 2); count = count + 2) {
 
-		cross_point_1 = (rand() % NUMITENS-1);
-		cross_point_2 = (rand() % NUMITENS-1);
-		while (cross_point_2 == cross_point_1){
-			cross_point_2 = (rand() % NUMITENS-1);
+		cross_point_1 = (rand() % NUMITENS - 1);
+		cross_point_2 = (rand() % NUMITENS - 1);
+		while (cross_point_2 == cross_point_1) {
+			cross_point_2 = (rand() % NUMITENS - 1);
 		}
 
-		if (cross_point_1 > cross_point_2){
+		if (cross_point_1 > cross_point_2) {
 			int aux = cross_point_1;
 			cross_point_1 = cross_point_2;
 			cross_point_2 = aux;
@@ -175,54 +178,55 @@ void crossOver_2(int limit) {
 			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
 			chromosome[count + 1][i][pop2] =
 					chromosome[reprod[count + 1]][i][pop1];
-			printf(">> Chromosome %d %d 1 = %d\n", count, i,
-					chromosome[count][i][pop2]);
-			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
-					chromosome[count + 1][i][pop2]);
+			/*printf(">> Chromosome %d %d 1 = %d\n", count, i,
+			 chromosome[count][i][pop2]);
+			 printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+			 chromosome[count + 1][i][pop2]);*/
 		}
 
 		for (i = cross_point_1 + 1; i <= cross_point_2; i++) {
 			chromosome[count][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
 			chromosome[count + 1][i][pop2] = chromosome[reprod[count]][i][pop1];
 
-			printf(">> Chromosome %d %d 1 = %d\n", count, i,
-					chromosome[count][i][pop2]);
-			printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
-					chromosome[count + 1][i][pop2]);
+			/*printf(">> Chromosome %d %d 1 = %d\n", count, i,
+			 chromosome[count][i][pop2]);
+			 printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+			 chromosome[count + 1][i][pop2]);*/
 		}
 
 		for (i = cross_point_2 + 1; i <= (NUMITENS - 1); i++) {
 
-					chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
-					chromosome[count + 1][i][pop2] = chromosome[reprod[count + 1]][i][pop1];
+			chromosome[count][i][pop2] = chromosome[reprod[count]][i][pop1];
+			chromosome[count + 1][i][pop2] =
+					chromosome[reprod[count + 1]][i][pop1];
 
-					printf(">> Chromosome %d %d 1 = %d\n", count, i,
-							chromosome[count][i][pop2]);
-					printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
-							chromosome[count + 1][i][pop2]);
-				}
+			/*printf(">> Chromosome %d %d 1 = %d\n", count, i,
+			 chromosome[count][i][pop2]);
+			 printf(">> Chromosome %d %d 1 = %d\n", count + 1, i,
+			 chromosome[count + 1][i][pop2]);*/
+		}
 
-		printf("Cross_point1 = %d \n", cross_point_1);
-		printf("Cross_point2 = %d \n", cross_point_2);
-		printf("Reprod 1 = %d\n", reprod[count]);
-		printf("Reprod 2 = %d\n", reprod[count+1]);
+		/*printf("Cross_point1 = %d \n", cross_point_1);
+		 printf("Cross_point2 = %d \n", cross_point_2);
+		 printf("Reprod 1 = %d\n", reprod[count]);
+		 printf("Reprod 2 = %d\n", reprod[count+1]);*/
 
 	}
 }
 
-void swap(){
+void swap() {
 	/*Aleatory choice*/
 	int mut, item;
 	int s1, s2;
 	int aux;
 	int pop2 = 1;
 
-	for (mut=0; mut < (NUMCRH * SWAP_RATE); mut++){
+	for (mut = 0; mut < (NUMCRH * MUT_RATE); mut++) {
 		item = rand() % NUMCRH;
 
 		s1 = rand() % NUMITENS;
 		s2 = rand() % NUMITENS;
-		while (s1 == s2){
+		while (s1 == s2) {
 			s2 = rand() % NUMITENS;
 		}
 
@@ -244,7 +248,7 @@ void next_gen() {
 
 	int temp_array[NUMCRH];
 
-	for (c = 0; c < NUMCRH; c++){
+	for (c = 0; c < NUMCRH; c++) {
 		temp_array[c] = chroms[c].ben;
 	}
 	BubbleSort(temp_array, NUMCRH);
@@ -253,10 +257,10 @@ void next_gen() {
 	 * Verifying what are the bests chromosomes
 	 */
 	int j = 0;
-	for (i=NUMCRH-1; i>=(NUMCRH-replic); i--,j++){
+	for (i = NUMCRH - 1; i >= (NUMCRH - replic); i--, j++) {
 		for (c = 0; c < NUMCRH; c++) {
-			if ( (chroms[c].ben == temp_array[i])) {
-				if( (j == 0) || (j != 0 && crm[j-1] != c) ){
+			if ((chroms[c].ben == temp_array[i])) {
+				if ((j == 0) || (j != 0 && crm[j - 1] != c)) {
 					crm[j] = c;
 					c = NUMCRH;
 				}
@@ -266,7 +270,7 @@ void next_gen() {
 
 	/*Replicating the bests for the next generation*/
 	int pos = 0;
-	for (c = (NUMCRH * REP_RATE); c<NUMCRH; c++,pos++){
+	for (c = (NUMCRH * REP_RATE); c < NUMCRH; c++, pos++) {
 		for (i = 0; i < NUMITENS; i++) {
 			chromosome[c][i][1] = chromosome[crm[pos]][i][0];
 		}
@@ -277,9 +281,9 @@ void next_gen() {
 	for (c = 0; c < NUMCRH; c++) {
 		for (i = 0; i < NUMITENS; i++) {
 			chromosome[c][i][0] = chromosome[c][i][1];
-			printf("%d  ", chromosome[c][i][0]);
+			//printf("%d  ", chromosome[c][i][0]);
 		}
-		printf("\n");
+		//printf("\n");
 	}
 }
 
@@ -292,7 +296,7 @@ int converg() {
 	int conv_aux = 0;
 	int temp_array[NUMCRH];
 
-	for (c = 0; c < NUMCRH; c++){
+	for (c = 0; c < NUMCRH; c++) {
 		temp_array[c] = chroms[c].ben;
 	}
 
@@ -353,30 +357,29 @@ void knapsack() {
 	printf("First pop\n");
 	for (c = 0; c < NUMCRH; c++) {
 		for (i = 0; i < NUMITENS; i++) {
-			chromosome[c][i][p] = (rand() % EACHITEM+1);
-			printf("%d  ", chromosome[c][i][p]);
+			chromosome[c][i][p] = (rand() % EACHITEM + 1);
+			//printf("%d  ", chromosome[c][i][p]);
 		}
-		printf("\n");
+		//printf("\n");
 	}
-	//return;
-
 	/*
 	 * Repeat while less than 80% of population has the same fitness value && count less than 500x
 	 */
 	int iteration, it;
-	for (iteration = 0; iteration <= STOP_LIMIT; iteration++) {
+	for (iteration = 0; iteration < STOP_LIMIT; iteration++) {
 		eval();
-		if (converg() >= (NUMCRH * REP_RATE)) {
-			it = iteration+1;
+		if (converg() >= (NUMCRH * 0.8)) {
+			it = iteration + 1;
 			iteration = STOP_LIMIT;
 		} else {
-			it = iteration+1;
+			it = iteration + 1;
 			//tournement();
 			roulette_wheel();
 			//crossOver_1(NUMCRH * REP_RATE);
 			crossOver_2(NUMCRH * REP_RATE);
 			swap();
 			next_gen();
+			printf("###### it: %d\n", iteration);
 		}
 	}
 	printf(">> Num Iterations: %d\n", it);
